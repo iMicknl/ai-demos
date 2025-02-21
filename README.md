@@ -6,7 +6,7 @@ A collection of (Gen)AI demos.
 
 | Demo                                                                   | Description                                                                      |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [Image Generation - Azure AI Foundry](maas-image-generation/README.md) | Generate images with Stable Diffusion or Bria AI models via Models as a Service. |
+| [Image Generation - Azure AI Foundry](/maas-image-generation#readme) | Generate images with Stable Diffusion or Bria AI models via Models as a Service. |
 
 ## Prerequisites
 
