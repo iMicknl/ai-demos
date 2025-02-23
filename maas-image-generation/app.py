@@ -23,6 +23,7 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 load_dotenv(override=True)
+logging.basicConfig(level=logging.INFO)
 
 MODEL_CONFIGS = {}
 
@@ -79,12 +80,12 @@ def generate_image(
     prompt: str,
     output_format: str,
     negative_prompt: str,
-    seed: int,
     size: str,
-    diffusion_steps: int,
-    guidance_scale: float,
+    seed: int | None = None,
+    diffusion_steps: int | None = None,
+    guidance_scale: float | None = None,
     image_prompt: str | None = None,
-    image_strength: float = 0.5,
+    image_strength: float | None = None,
 ) -> Image.Image:
     """
     Generate an image based on the provided configuration and prompt parameters.
@@ -96,8 +97,10 @@ def generate_image(
         "prompt": prompt,
         "output_format": output_format,
         "size": size,
-        "seed": seed,
     }
+
+    if seed:
+        params["seed"] = seed
 
     if model_config["provider"] == "Bria":
         if diffusion_steps:
@@ -113,7 +116,14 @@ def generate_image(
         buffered = BytesIO()
         image_prompt.save(buffered, format="PNG")
         encoded_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        params["image_prompt"] = {"image": encoded_string, "strength": image_strength}
+
+        if image_strength:
+            params["image_prompt"] = {
+                "image": encoded_string,
+                "strength": image_strength,
+            }
+        else:
+            params["image_prompt"] = {"image": encoded_string}
 
     logger.info(f"Using model: {model_choice}")
     logger.info(
@@ -203,7 +213,7 @@ with gr.Blocks(title="Image Generation - Azure AI Foundry") as demo:
                 output_format = gr.Radio(
                     choices=["jpeg", "png"],
                     label="Output Format",
-                    value="jpeg",
+                    value="png",
                 )
                 # (visible only for Stable Diffusion 3.5)
                 image_strength = gr.Slider(
@@ -211,11 +221,15 @@ with gr.Blocks(title="Image Generation - Azure AI Foundry") as demo:
                     maximum=1,
                     step=0.01,
                     label="Image Strength (optional)",
-                    value=0.5,
+                    value=lambda: None,
                 )
 
                 seed = gr.Slider(
-                    minimum=0, maximum=1000, step=1, label="Seed (optional)", value=0
+                    minimum=0,
+                    maximum=1000,
+                    step=1,
+                    label="Seed (optional)",
+                    value=lambda: None,
                 )
                 # Optional Bria-specific parameters (hidden by default)
                 diffusion_steps = gr.Slider(
@@ -224,7 +238,7 @@ with gr.Blocks(title="Image Generation - Azure AI Foundry") as demo:
                     step=1,
                     label="Number of Diffusion Steps",
                     visible=False,
-                    value=10,
+                    value=lambda: None,
                 )
                 guidance_scale = gr.Slider(
                     minimum=1.0,
@@ -232,7 +246,7 @@ with gr.Blocks(title="Image Generation - Azure AI Foundry") as demo:
                     step=0.1,
                     label="Guidance Scale",
                     visible=False,
-                    value=2.5,
+                    value=lambda: None,
                 )
 
             generate_btn = gr.Button("Generate Image", variant="primary")
@@ -284,8 +298,8 @@ with gr.Blocks(title="Image Generation - Azure AI Foundry") as demo:
             prompt,
             output_format,
             negative_prompt,
-            seed,
             size,
+            seed,
             diffusion_steps,
             guidance_scale,
             image_prompt,
